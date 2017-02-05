@@ -14,7 +14,7 @@ How to run in local
 
 1 : Clone project from github `https://github.com/Nguonchhay/RUPPFSM`
 
-2 : Open project with your favorite edit. We recommend to use Eclipse Mar
+2 : Open project with your favorite editor. We recommend to use Eclipse Mar
 
 3 : Right click on file `FSMDemo.java`
 
