@@ -17,28 +17,34 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import model.DogAction;
+import model.DogCommand;
 import model.FileProcess;
 import model.Window;
 
 public class DogForm extends JFrame implements ActionListener {
-	public final int DELAY = 500;
+	public final int DELAY = 300;
 	
 	private JFrame object;
 	private JLabel lblAnimate;
 	private Map<String, String> animationGit;
-	private JButton btnThief, btnFood, btnOwner, btnNight;
-	private String action, command;
+	private JButton btnThiefArrives, btnThiefLeaves, btnThiefGivesMeat;
+	private JButton btnBossArrives, btnBossLeaves, btnBossGivesMeat;
+	private JButton btnFinishEating;
+	private String action, command, previousAction;
 	private JTextField txtMessage;
+	private boolean isAlive;
 	
 	public DogForm() {
 		super("Finite State Machine - Dog");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		Window.setMaximize(this,false);
+		isAlive = true;
+		action = previousAction = DogAction.WATCH;
+		command = "idle";
 		object = this;
 		assignGifs();
 		initControls();
-		action = "walk";
-		command = "idle";
 		ThreadDog threadDog = new ThreadDog();
 		threadDog.start();
 	}
@@ -50,7 +56,8 @@ public class DogForm extends JFrame implements ActionListener {
 		animationGit.put("welcome", basePath + "/welcome.gif");
 		animationGit.put("bark", basePath + "/bark.gif");
 		animationGit.put("eat", basePath + "/eat.gif");
-		animationGit.put("sleep", basePath + "/sleep.gif");
+		animationGit.put("eat-poisoned", basePath + "/eat-poisoned.gif");
+		animationGit.put("die", basePath + "/die.gif");
 	}
 	
 	public void initControls() {
@@ -70,50 +77,67 @@ public class DogForm extends JFrame implements ActionListener {
 		int x = 50, y = 15;
 		JPanel pnlLeft = new JPanel(null);
 		pnlLeft.setBorder(BorderFactory.createLineBorder(Color.black));
-		pnlLeft.setBounds(x,  y + 35, 300, 500);
+		pnlLeft.setBounds(x,  y + 35, 500, 500);
 		
 		JLabel lblCommand = new JLabel("Commands");
 		lblCommand.setFont(new Font("Times New Roman", Font.PLAIN, 18));
-		lblCommand.setBounds(x + 50, y, 100, 30);
+		lblCommand.setBounds(200, y, 100, 30);
 		pnlLeft.add(lblCommand);
 		
+		// Thief commands
 		y += 100;
-		btnThief = new JButton("Thief");
-		btnThief.setBounds(x + 40, y, 220, 35);
-		btnThief.addActionListener(this);
+		btnThiefArrives = new JButton("Thief arrives");
+		btnThiefArrives.setBounds(x + 40, y, 100, 35);
+		btnThiefArrives.addActionListener(this);
+		panel.add(btnThiefArrives);
 		
-		btnFood = new JButton("Food");
-		btnFood.setBounds(x + 40, y + 50, 220, 35);
-		btnFood.addActionListener(this);
+		btnThiefLeaves = new JButton("Thief leaves");
+		btnThiefLeaves.setBounds(x + 40 + 100, y, 100, 35);
+		btnThiefLeaves.addActionListener(this);
+		panel.add(btnThiefLeaves);
 		
-		btnOwner = new JButton("Owner");
-		btnOwner.setBounds(x + 40, y + 100, 220, 35);
-		btnOwner.addActionListener(this);
+		btnThiefGivesMeat = new JButton("Thief gives poisoned meat");
+		btnThiefGivesMeat.setBounds(x + 40 + 100 + 100, y, 200, 35);
+		btnThiefGivesMeat.addActionListener(this);
+		panel.add(btnThiefGivesMeat);
 		
-		btnNight = new JButton("Night");
-		btnNight.setBounds(x + 40, y + 150, 220, 35);
-		btnNight.addActionListener(this);
-			
-		panel.add(btnThief);
-		panel.add(btnFood);
-		panel.add(btnOwner);
-		panel.add(btnNight);
+		// Boss commands
+		btnBossArrives = new JButton("Boss arrives");
+		btnBossArrives.setBounds(x + 40, y + 50, 100, 35);
+		btnBossArrives.addActionListener(this);
+		panel.add(btnBossArrives);
+		
+		btnBossLeaves = new JButton("Boss leaves");
+		btnBossLeaves.setBounds(x + 40 + 100, y + 50, 100, 35);
+		btnBossLeaves.addActionListener(this);
+		panel.add(btnBossLeaves);
+		
+		btnBossGivesMeat = new JButton("Boss gives meat");
+		btnBossGivesMeat.setBounds(x + 40 + 100 + 100, y + 50, 150, 35);
+		btnBossGivesMeat.addActionListener(this);
+		panel.add(btnBossGivesMeat);
+		
+		// Eating commands	
+		btnFinishEating = new JButton("Finish eating");
+		btnFinishEating.setBounds(x + 40, y + 100, 100, 35);
+		btnFinishEating.addActionListener(this);
+		panel.add(btnFinishEating);
 		panel.add(pnlLeft);
 	}
 	
 	public void initRightPanel(JPanel panel) {
 		JPanel pnlRight = new JPanel(null);
 		pnlRight.setBorder(BorderFactory.createLineBorder(Color.black));
-		pnlRight.setBounds(400,  50, 550, 500);
+		pnlRight.setBounds(600,  50, 550, 500);
 		
-		JLabel lblCommand = new JLabel("Actions");
+		JLabel lblCommand = new JLabel("Performing Actions");
 		lblCommand.setFont(new Font("Times New Roman", Font.PLAIN, 18));
-		lblCommand.setBounds(250, 15, 100, 30);
+		lblCommand.setBounds(200, 15, 200, 30);
 		pnlRight.add(lblCommand);
 		
 	    lblAnimate = new JLabel();
 	    lblAnimate.setBounds(25, 10, 500, 400);
-		repaintGif("watching");
+		repaintGif(action);
 		
 		txtMessage = new JTextField(50);
 		txtMessage.setBounds(25, 400, 500, 35);
@@ -126,7 +150,7 @@ public class DogForm extends JFrame implements ActionListener {
 	public void repaintGif(String gif) {
 		 BufferedImage img;
 			try {
-				img = ImageIO.read(new File(animationGit.get("bark")));
+				img = ImageIO.read(new File(animationGit.get(gif)));
 				ImageIcon icon=new ImageIcon(img);
 		        lblAnimate.setIcon(icon);
 			} catch (IOException e) {
@@ -137,52 +161,108 @@ public class DogForm extends JFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		if (event.getSource() == btnThief) {
-			command = "thief";
-		} else if (event.getSource() == btnFood) {
-			command = "food";
-		} else if (event.getSource() == btnOwner) {
-			command = "owner";
-		} else if (event.getSource() == btnNight) {
-			command = "night";
-		} else {
-			command = "idle";
+		if (event.getSource() == btnThiefArrives) {
+			command = DogCommand.THIEF_ARRIVES;
+		} else if (event.getSource() == btnThiefLeaves) {
+			command = DogCommand.THIEF_LEAVES;
+		} else if (event.getSource() == btnThiefGivesMeat) {
+			command = DogCommand.THIEF_GIVES_MEAT;
+		} else if (event.getSource() == btnBossArrives) {
+			command = DogCommand.BOSS_ARRIVES;
+		} else if (event.getSource() == btnBossLeaves) {
+			command = DogCommand.BOSS_LEAVES;
+		} else if (event.getSource() == btnBossGivesMeat) {
+			command = DogCommand.BOSS_GIVES_MEAT;
+		} else if (event.getSource() == btnFinishEating) {
+			command = DogCommand.FINISH_EATING;
 		}
 	}
 	
 	class ThreadDog extends Thread {
-		public void run(){				
-			while(true){
+		public void run() {				
+			while (isAlive) {
 				try {
 					switch (command) {
-					case "thief":
-						action = "bark";
-						break;
-					case "food":
-						action = "eat";
-						break;
-					case "owner":
-						action = "welcome";
-						break;
-					case "night":
-						action = "sleep";
-						break;
-					default:
-						action = "walk";
-						break;
+						case DogCommand.THIEF_ARRIVES:
+							action = DogAction.BARK;
+							break;
+						case DogCommand.THIEF_LEAVES:
+							switch (action) {
+								case DogAction.WELCOME:
+									action = DogAction.WELCOME;
+									break;
+								case DogAction.EAT:
+									action = DogAction.EAT;
+									break;
+								case DogAction.EAT_POISONED:
+									action = DogAction.EAT_POISONED;
+									break;
+								default:
+									action = DogAction.WATCH;
+							}
+							break;
+						case DogCommand.THIEF_GIVES_MEAT:
+							switch (action) {
+								case DogAction.EAT:
+									break;
+								case DogAction.WELCOME:
+									break;
+								default:
+									action = DogAction.EAT_POISONED;
+							}
+							break;
+						case DogCommand.BOSS_ARRIVES:
+							switch (action) {
+								case DogAction.BARK:
+									break;
+								default:
+									action = DogAction.WELCOME;
+							}
+							break;
+						case DogCommand.BOSS_LEAVES:
+							switch (action) {
+								case DogAction.BARK:
+									action = DogAction.BARK;
+									break;
+								case DogAction.EAT_POISONED:
+									action = DogAction.EAT_POISONED;
+									break;
+								case DogAction.EAT:
+									action = DogAction.EAT;
+									break;
+								default:
+									action = DogAction.WATCH;
+							}
+							break;
+						case DogCommand.BOSS_GIVES_MEAT:
+							action = DogAction.EAT;
+							break;
+						case DogCommand.FINISH_EATING:
+							switch (action) {
+								case DogAction.EAT_POISONED:
+									action = DogAction.DIE;
+									isAlive = false;
+									break;
+								default:
+									action = DogAction.WATCH;
+							}
+							break;
+						default:
+							action = DogAction.WATCH;
 					}
-					
+
 					Thread.sleep(DELAY);
 					txtMessage.setText("");
 					txtMessage.setBorder(BorderFactory.createLineBorder(Color.blue));
-					Thread.sleep(200);
+					Thread.sleep(100);
 					txtMessage.setBorder(BorderFactory.createLineBorder(Color.black));
-					txtMessage.setText("  " + action);
+					txtMessage.setText(" " + action);
 					repaintGif(action);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
+			txtMessage.setText(" System was terminate because dog was dead.");
 		}
 	}
 }
