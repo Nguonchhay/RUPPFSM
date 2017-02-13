@@ -208,7 +208,8 @@ public class DogForm extends JFrame implements ActionListener {
 								case DogAction.WELCOME:
 									break;
 								default:
-									action = DogAction.EAT_POISONED;
+									action = DogAction.DIE;
+									isAlive = false;
 							}
 							break;
 						case DogCommand.BOSS_ARRIVES:
