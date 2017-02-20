@@ -182,74 +182,58 @@ public class DogForm extends JFrame implements ActionListener {
 		public void run() {				
 			while (isAlive) {
 				try {
-					switch (command) {
-						case DogCommand.THIEF_ARRIVES:
-							action = DogAction.BARK;
-							break;
-						case DogCommand.THIEF_LEAVES:
-							switch (action) {
-								case DogAction.WELCOME:
-									action = DogAction.WELCOME;
-									break;
-								case DogAction.EAT:
-									action = DogAction.EAT;
-									break;
-								case DogAction.EAT_POISONED:
-									action = DogAction.EAT_POISONED;
-									break;
-								default:
-									action = DogAction.WATCH;
-							}
-							break;
-						case DogCommand.THIEF_GIVES_MEAT:
-							switch (action) {
-								case DogAction.EAT:
-									break;
-								case DogAction.WELCOME:
-									break;
-								default:
-									action = DogAction.DIE;
-									isAlive = false;
-							}
-							break;
-						case DogCommand.BOSS_ARRIVES:
-							switch (action) {
-								case DogAction.BARK:
-									break;
-								default:
-									action = DogAction.WELCOME;
-							}
-							break;
-						case DogCommand.BOSS_LEAVES:
-							switch (action) {
-								case DogAction.BARK:
+					switch(action) {
+						case DogAction.WELCOME:
+							switch(command) {
+								case DogCommand.THIEF_ARRIVES:
 									action = DogAction.BARK;
 									break;
-								case DogAction.EAT_POISONED:
+								case DogCommand.THIEF_GIVES_MEAT:
 									action = DogAction.EAT_POISONED;
 									break;
-								case DogAction.EAT:
+								case DogCommand.BOSS_LEAVES:
+									action = DogAction.WATCH;
+									break;
+								case DogCommand.BOSS_GIVES_MEAT:
+									action = DogAction.EAT;
+									break;
+							}
+							break;
+						case DogAction.BARK:
+							switch(command) {
+								case DogCommand.THIEF_GIVES_MEAT:
+									action = DogAction.EAT_POISONED;
+									break;
+								case DogCommand.THIEF_LEAVES:
+									action = DogAction.WATCH;
+									break;
+							}
+							break;
+						case DogAction.EAT:
+							switch(command) {
+								case DogCommand.FINISH_EATING:
+									action = DogAction.WATCH;
+									break;
+							}
+							break;
+						case DogAction.EAT_POISONED:
+							action = DogAction.DIE;
+							isAlive = false;
+							break;
+						default:
+							switch(command) {
+								case DogCommand.BOSS_ARRIVES:
+									action = DogAction.WELCOME;
+									break;
+								case DogCommand.THIEF_ARRIVES:
+									action = DogAction.BARK;
+									break;
+								case DogCommand.BOSS_GIVES_MEAT:
 									action = DogAction.EAT;
 									break;
 								default:
 									action = DogAction.WATCH;
 							}
-							break;
-						case DogCommand.BOSS_GIVES_MEAT:
-							action = DogAction.EAT;
-							break;
-						case DogCommand.FINISH_EATING:
-							switch (action) {
-								case DogAction.EAT_POISONED:
-									action = DogAction.DIE;
-									isAlive = false;
-									break;
-								default:
-									action = DogAction.WATCH;
-							}
-							break;
-						default:
-							action = DogAction.WATCH;
 					}
 
 					Thread.sleep(DELAY);
